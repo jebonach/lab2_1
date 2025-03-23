@@ -21,11 +21,15 @@ static void complex_freeValue(void* value) {
 
 static void* complex_readValue() {
     double re, im;
-    if (scanf("%lf %lf", &re, &im) != 2) {
-        re = 0.0;
-        im = 0.0;
+    while (1) {
+        int rc = scanf("%lf %lf", &re, &im);
+        if (rc == 2) {
+            return newComplex(re, im);
+        } else {
+            printf("[Ошибка] Введите действительную и мнимую часть через пробел: ");
+            while (getchar() != '\n') { /* пустой цикл */ }
+        }
     }
-    return newComplex(re, im);
 }
 
 static void complex_printValue(void* value) {
@@ -51,8 +55,6 @@ static void* complex_mulScalar(void* a, double scalar) {
     Complex* c = (Complex*)a;
     return newComplex(c->re * scalar, c->im * scalar);
 }
-
-
 
 FieldInfo* GetComplexFieldInfo() {
     if (COMPLEX_FIELD_INFO == NULL) {

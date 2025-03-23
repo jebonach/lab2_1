@@ -5,7 +5,7 @@
 static FieldInfo* REAL_FIELD_INFO = NULL;
 
 static void* real_createZero() {
-    double* zero = (double*)malloc(sizeof(double));
+    double* zero = malloc(sizeof(double));
     *zero = 0.0;
     return zero;
 }
@@ -14,12 +14,20 @@ static void real_freeValue(void* value) {
     free(value);
 }
 
+
 static void* real_readValue() {
-    double* val = (double*)malloc(sizeof(double));
-    if (scanf("%lf", val) != 1) {
-        *val = 0.0;
+    double temp;
+    while (1) {
+        int rc = scanf("%lf", &temp);
+        if (rc == 1) {
+            double* val = malloc(sizeof(double));
+            *val = temp;
+            return val;
+        } else {
+            printf("[Ошибка] Введите корректное вещественное число: ");
+            while (getchar() != '\n') {}
+        }
     }
-    return val;
 }
 
 static void real_printValue(void* value) {
@@ -28,33 +36,31 @@ static void real_printValue(void* value) {
 }
 
 static void* real_add(void* a, void* b) {
-    double* da = (double*)a;
-    double* db = (double*)b;
-    double* res = (double*)malloc(sizeof(double));
-    *res = (*da) + (*db);
+    double da = *((double*)a);
+    double db = *((double*)b);
+    double* res = malloc(sizeof(double));
+    *res = da + db;
     return res;
 }
 
 static void* real_mul(void* a, void* b) {
-    double* da = (double*)a;
-    double* db = (double*)b;
-    double* res = (double*)malloc(sizeof(double));
-    *res = (*da) * (*db);
+    double da = *((double*)a);
+    double db = *((double*)b);
+    double* res = malloc(sizeof(double));
+    *res = da * db;
     return res;
 }
 
 static void* real_mulScalar(void* a, double scalar) {
-    double* da = (double*)a;
-    double* res = (double*)malloc(sizeof(double));
-    *res = (*da) * scalar;
+    double da = *((double*)a);
+    double* res = malloc(sizeof(double));
+    *res = da * scalar;
     return res;
 }
 
-
-
 FieldInfo* GetRealFieldInfo() {
     if (REAL_FIELD_INFO == NULL) {
-        REAL_FIELD_INFO = (FieldInfo*)malloc(sizeof(FieldInfo));
+        REAL_FIELD_INFO = malloc(sizeof(FieldInfo));
         REAL_FIELD_INFO->createZero = real_createZero;
         REAL_FIELD_INFO->freeValue = real_freeValue;
         REAL_FIELD_INFO->readValue = real_readValue;
