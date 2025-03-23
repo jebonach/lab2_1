@@ -1,11 +1,10 @@
 #ifndef FIELDINFO_H
 #define FIELDINFO_H
 
-/*
- * Каждая функция, если возвращает результат, возвращает его как (void*).
- * Это позволяет хранить в матрице элементы "любого" типа, при условии,
- * что для этого типа определены все нужные операции.
- */
+// Каждая функция, если возвращает результат, возвращает его как (void*).
+// Это позволяет хранить в матрице элементы "любого" типа, при условии,
+// что для этого типа определены все нужные операции.
+ 
 
 typedef void* (*CreateZeroFunction)();
 typedef void (*FreeValueFunction)(void* value);
@@ -25,16 +24,14 @@ typedef struct FieldInfo {
     MulScalarFunction  mulScalar;
 } FieldInfo;
 
-/*
- * указатель на FI для вещественных чисел.
- * real.c
- */
+
+// указатель на FI для вещественных чисел.
+// real.c
+ 
 FieldInfo* GetRealFieldInfo();
 
-/*
- * указатель на FI для комплексных чисел.
- * complex.c
- */
+// указатель на FI для комплексных чисел.
+// complex.c
 FieldInfo* GetComplexFieldInfo();
 
 #endif
