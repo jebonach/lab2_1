@@ -16,12 +16,12 @@ typedef void* (*MulScalarFunction)(void* a, double scalar);
 
 typedef struct FieldInfo {
     CreateZeroFunction createZero;
-    FreeValueFunction  freeValue;
-    ReadValueFunction  readValue;
+    FreeValueFunction freeValue;
+    ReadValueFunction readValue;
     PrintValueFunction printValue;
-    AddFunction        add;
-    MulFunction        mul;
-    MulScalarFunction  mulScalar;
+    AddFunction add;
+    MulFunction mul;
+    MulScalarFunction mulScalar;
 } FieldInfo;
 
 
