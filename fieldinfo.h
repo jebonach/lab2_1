@@ -5,7 +5,7 @@
 // Это позволяет хранить в матрице элементы "любого" типа, при условии,
 // что для этого типа определены все нужные операции.
  
-
+// Добавить проверку при чтении, главное не забыть
 typedef void* (*CreateZeroFunction)();
 typedef void (*FreeValueFunction)(void* value);
 typedef void* (*ReadValueFunction)();
