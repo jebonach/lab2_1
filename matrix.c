@@ -1,17 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-
 #include "matrix.h"
 
-Matrix* createMatrix(int size, FieldInfo* field) {
-    assert(size > 0);
+Matrix* createMatrix(int rows, int cols, FieldInfo* field) {
+    assert(rows > 0 && cols > 0);
     Matrix* mat = (Matrix*)malloc(sizeof(Matrix));
-    mat->size = size;
+    mat->rows  = rows;
+    mat->cols  = cols;
     mat->field = field;
-    mat->data = (void**)malloc(size * size * sizeof(void*));
+    mat->data = (void**)malloc(rows * cols * sizeof(void*));
 
-    for (int i = 0; i < size*size; i++) {
+    for (int i = 0; i < rows * cols; i++) {
         mat->data[i] = field->createZero();
     }
     return mat;
@@ -19,24 +19,26 @@ Matrix* createMatrix(int size, FieldInfo* field) {
 
 void freeMatrix(Matrix* mat) {
     if (!mat) return;
-    for (int i = 0; i < mat->size * mat->size; i++) {
+    int total = mat->rows * mat->cols;
+    for (int i = 0; i < total; i++) {
         mat->field->freeValue(mat->data[i]);
     }
     free(mat->data);
     free(mat);
 }
 
-void readMatrix(Matrix* mat) {
-    for (int i = 0; i < mat->size * mat->size; i++) {
+ErrorCode readMatrix(Matrix* mat) {
+    for (int i = 0; i < mat->rows * mat->cols; i++) {
         mat->field->freeValue(mat->data[i]);
         mat->data[i] = mat->field->readValue();
     }
+    return ERROR_NONE;
 }
 
-void printMatrix(Matrix* mat) {
-    for (int i = 0; i < mat->size; i++) {
-        for (int j = 0; j < mat->size; j++) {
-            mat->field->printValue(mat->data[i * mat->size + j]);
+void printMatrix(const Matrix* mat) {
+    for (int r = 0; r < mat->rows; r++) {
+        for (int c = 0; c < mat->cols; c++) {
+            mat->field->printValue(mat->data[r * mat->cols + c]);
             printf(" ");
         }
         printf("\n");
@@ -44,13 +46,22 @@ void printMatrix(Matrix* mat) {
     printf("\n");
 }
 
-Matrix* addMatrix(const Matrix* A, const Matrix* B) {
-    assert(A->size == B->size);
-    assert(A->field == B->field);
-    int size = A->size;
-    Matrix* C = createMatrix(size, A->field);
+Matrix* addMatrix(const Matrix* A, const Matrix* B, ErrorCode* err) {
+    *err = ERROR_NONE;
 
-    for (int i = 0; i < size*size; i++) {
+    if (A->field != B->field) {
+        *err = ERROR_TYPE;
+        return NULL;
+    }
+
+    if (A->rows != B->rows || A->cols != B->cols) {
+        *err = ERROR_DIM;
+        return NULL;
+    }
+
+    Matrix* C = createMatrix(A->rows, A->cols, A->field);
+    int total = A->rows * A->cols;
+    for (int i = 0; i < total; i++) {
         void* sum = A->field->add(A->data[i], B->data[i]);
         A->field->freeValue(C->data[i]);
         C->data[i] = sum;
@@ -58,40 +69,48 @@ Matrix* addMatrix(const Matrix* A, const Matrix* B) {
     return C;
 }
 
-Matrix* mulMatrix(const Matrix* A, const Matrix* B) {
-    assert(A->size == B->size);
-    assert(A->field == B->field);
-    int size = A->size;
-    Matrix* C = createMatrix(size, A->field);
+Matrix* mulMatrix(const Matrix* A, const Matrix* B, ErrorCode* err) {
+    *err = ERROR_NONE;
+    if (A->field != B->field) {
+        *err = ERROR_TYPE;
+        return NULL;
+    }
+    if (A->cols != B->rows) {
+        *err = ERROR_DIM;
+        return NULL;
+    }
 
-    for (int i = 0; i < size; i++) {
-        for (int j = 0; j < size; j++) {
+    Matrix* C = createMatrix(A->rows, B->cols, A->field);
 
+    for (int i = 0; i < A->rows; i++) {
+        for (int j = 0; j < B->cols; j++) {
             void* acc = A->field->createZero();
-
-            for (int k = 0; k < size; k++) {
-                void* tmp = A->field->mul(A->data[i*size + k], B->data[k*size + j]);
-                void* acc_new = A->field->add(acc, tmp);
-
+            for (int k = 0; k < A->cols; k++) {
+                void* mul = A->field->mul(
+                    A->data[i * A->cols + k],
+                    B->data[k * B->cols + j]
+                );
+                void* newAcc = A->field->add(acc, mul);
                 A->field->freeValue(acc);
-                A->field->freeValue(tmp);
-
-                acc = acc_new;
+                A->field->freeValue(mul);
+                acc = newAcc;
             }
-            A->field->freeValue(C->data[i*size + j]);
-            C->data[i*size + j] = acc;
+            int indexC = i * C->cols + j;
+            A->field->freeValue(C->data[indexC]);
+            C->data[indexC] = acc;
         }
     }
     return C;
 }
 
-Matrix* mulMatrixByScalar(const Matrix* A, double scalar) {
-    int size = A->size;
-    Matrix* C = createMatrix(size, A->field);
-    for (int i = 0; i < size*size; i++) {
-        void* tmp = A->field->mulScalar(A->data[i], scalar);
+Matrix* mulMatrixByScalar(const Matrix* A, double scalar, ErrorCode* err) {
+    *err = ERROR_NONE;
+    Matrix* C = createMatrix(A->rows, A->cols, A->field);
+    int total = A->rows * A->cols;
+    for (int i = 0; i < total; i++) {
+        void* val = A->field->mulScalar(A->data[i], scalar);
         A->field->freeValue(C->data[i]);
-        C->data[i] = tmp;
+        C->data[i] = val;
     }
     return C;
 }
