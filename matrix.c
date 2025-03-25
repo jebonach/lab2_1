@@ -4,12 +4,11 @@
 #include "matrix.h"
 
 Matrix* createMatrix(int rows, int cols, FieldInfo* field) {
-    assert(rows > 0 && cols > 0);
-    Matrix* mat = (Matrix*)malloc(sizeof(Matrix));
-    mat->rows  = rows;
-    mat->cols  = cols;
+    Matrix* mat = malloc(sizeof(Matrix));
+    mat->rows = rows;
+    mat->cols = cols;
     mat->field = field;
-    mat->data = (void**)malloc(rows * cols * sizeof(void*));
+    mat->data = malloc(rows * cols * sizeof(void*));
 
     for (int i = 0; i < rows * cols; i++) {
         mat->data[i] = field->createZero();
@@ -32,7 +31,7 @@ ErrorCode readMatrix(Matrix* mat) {
         mat->field->freeValue(mat->data[i]);
         mat->data[i] = mat->field->readValue();
     }
-    return ERROR_NONE;
+    return MakeError(ERROR_NONE, "OK");
 }
 
 void printMatrix(const Matrix* mat) {
@@ -47,64 +46,59 @@ void printMatrix(const Matrix* mat) {
 }
 
 Matrix* addMatrix(const Matrix* A, const Matrix* B, ErrorCode* err) {
-    *err = ERROR_NONE;
-
+    *err = MakeError(ERROR_NONE, "OK");
     if (A->field != B->field) {
-        *err = ERROR_TYPE;
+        *err = MakeError(ERROR_TYPE, "Разные типы элементов");
         return NULL;
     }
-
     if (A->rows != B->rows || A->cols != B->cols) {
-        *err = ERROR_DIM;
+        *err = MakeError(ERROR_DIM, "Несовместимые размеры при сложении");
         return NULL;
     }
-
     Matrix* C = createMatrix(A->rows, A->cols, A->field);
     int total = A->rows * A->cols;
     for (int i = 0; i < total; i++) {
         void* sum = A->field->add(A->data[i], B->data[i]);
-        A->field->freeValue(C->data[i]);
+        A->field->freeValue(C->data[i]); // освободим ноль
         C->data[i] = sum;
     }
     return C;
 }
 
 Matrix* mulMatrix(const Matrix* A, const Matrix* B, ErrorCode* err) {
-    *err = ERROR_NONE;
+    *err = MakeError(ERROR_NONE, "OK");
     if (A->field != B->field) {
-        *err = ERROR_TYPE;
+        *err = MakeError(ERROR_TYPE, "Разные типы");
         return NULL;
     }
     if (A->cols != B->rows) {
-        *err = ERROR_DIM;
+        *err = MakeError(ERROR_DIM, "Несовместимые размеры при умножении");
         return NULL;
     }
-
     Matrix* C = createMatrix(A->rows, B->cols, A->field);
-
     for (int i = 0; i < A->rows; i++) {
         for (int j = 0; j < B->cols; j++) {
             void* acc = A->field->createZero();
             for (int k = 0; k < A->cols; k++) {
-                void* mul = A->field->mul(
+                void* mval = A->field->mul(
                     A->data[i * A->cols + k],
                     B->data[k * B->cols + j]
                 );
-                void* newAcc = A->field->add(acc, mul);
+                void* newAcc = A->field->add(acc, mval);
                 A->field->freeValue(acc);
-                A->field->freeValue(mul);
+                A->field->freeValue(mval);
                 acc = newAcc;
             }
-            int indexC = i * C->cols + j;
-            A->field->freeValue(C->data[indexC]);
-            C->data[indexC] = acc;
+            int idx = i * C->cols + j;
+            A->field->freeValue(C->data[idx]);
+            C->data[idx] = acc;
         }
     }
     return C;
 }
 
 Matrix* mulMatrixByScalar(const Matrix* A, double scalar, ErrorCode* err) {
-    *err = ERROR_NONE;
+    *err = MakeError(ERROR_NONE, "OK");
     Matrix* C = createMatrix(A->rows, A->cols, A->field);
     int total = A->rows * A->cols;
     for (int i = 0; i < total; i++) {

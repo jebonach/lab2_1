@@ -1,11 +1,22 @@
 #include "errors.h"
+#include <stdio.h>
+#include <string.h>
 
-const char* GetErrorMessage(ErrorCode err) {
-    switch (err) {
-        case ERROR_NONE: return "Нет ошибок";
-        case ERROR_DIM: return "Несовместимые размеры матриц";
-        case ERROR_TYPE: return "Несовместимые типы (разные FieldInfo)";
-        case ERROR_INPUT: return "Ошибка при вводе";
-        default: return "Неизвестная ошибка";
+
+ErrorCode MakeError(int code, const char* msg) {
+    ErrorCode e;
+    e.code = code;
+    strncpy(e.message, msg, sizeof(e.message)-1);
+    e.message[sizeof(e.message)-1] = '\0';
+    return e;
+}
+
+int IsOk(const ErrorCode* err) {
+    return (err->code == ERROR_NONE);
+}
+
+void PrintError(const ErrorCode* err) {
+    if (err->code != ERROR_NONE) {
+        printf("Error %d: %s\n", err->code, err->message);
     }
 }
